@@ -104,8 +104,9 @@ body::after {
 
 .container {
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 /* Skip Link */
@@ -788,16 +789,49 @@ body::after {
 }
 
 /* Responsive - Sort/Group */
+@media (max-width: 1024px) {
+  .sort-group-controls {
+    flex-wrap: wrap;
+  }
+
+  .sort-group-controls .control-group {
+    flex: 1 1 180px;
+    min-width: 140px;
+  }
+
+  .sort-group-controls .apply-btn,
+  .sort-group-controls .reset-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .sort-group-controls {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 1rem;
   }
 
-  .apply-btn,
-  .reset-btn {
+  .sort-group-controls .control-group {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .sort-group-controls .apply-btn,
+  .sort-group-controls .reset-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .sort-group-button-group {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .sort-group-button-group .apply-btn,
+  .sort-group-button-group .reset-btn {
+    flex: 1;
   }
 
   .search-section.sticky {
@@ -816,11 +850,6 @@ body::after {
 
   .detail-card {
     grid-template-columns: 1fr;
-  }
-
-  .apply-btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .group-content {
@@ -1096,10 +1125,26 @@ html {
 }
 
 .sort-group-controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  align-items: end;
+  align-items: flex-end;
+}
+
+.sort-group-controls .control-group {
+  flex: 1 1 200px;
+  min-width: 150px;
+}
+
+.sort-group-controls .apply-btn,
+.sort-group-controls .reset-btn {
+  flex: 0 0 auto;
+}
+
+.sort-group-button-group {
+  display: flex;
+  gap: 0.75rem;
+  flex: 0 0 auto;
 }
 
 .control-group {
