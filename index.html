@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencarian Biodata Mahasiswa IF 2025</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1>Pencarian Biodata Mahasiswa</h1>
+            <p class="subtitle">Informatika 2025 - UPN Veteran Yogyakarta</p>
+            <button id="updateCsvBtn" class="update-csv-btn hidden" title="Update/Upload ulang file CSV">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M17 8L12 3M12 3L7 8M12 3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Update CSV</span>
+            </button>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <div class="input-wrapper">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                        <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input 
+                        type="text" 
+                        id="nimInput" 
+                        placeholder="Masukkan 3 digit terakhir NIM (contoh: 001)"
+                        maxlength="3"
+                        autocomplete="off"
+                    >
+                    <button id="searchBtn" class="search-button">
+                        <span>Cari</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="hint">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Masukkan 3 digit terakhir dari NIM Anda</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Mencari data...</p>
+        </div>
+
+        <div id="result" class="result hidden">
+            <div class="result-header">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h2>Data Ditemukan</h2>
+            </div>
+            <div class="result-content">
+                <div class="info-card">
+                    <div class="info-item">
+                        <span class="info-label">No</span>
+                        <span class="info-value" id="no"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">NIM</span>
+                        <span class="info-value" id="nim"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Nama Mahasiswa</span>
+                        <span class="info-value" id="nama"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Kelompok</span>
+                        <span class="info-value" id="kelompok"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Tempat, Tanggal Lahir</span>
+                        <span class="info-value" id="ttl"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Instagram</span>
+                        <span class="info-value" id="instagram"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Hobi</span>
+                        <span class="info-value" id="hobi"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Golongan Darah</span>
+                        <span class="info-value" id="golonganDarah"></span>
+                    </div>
+                    <div class="info-item full-width">
+                        <span class="info-label">Alamat saat ini</span>
+                        <span class="info-value" id="alamat"></span>
+                    </div>
+                </div>
+            </div>
+            <button id="searchAgainBtn" class="search-again-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21M12 21C7.02944 21 3 16.9706 3 12M12 21C15.866 21 19 17.866 19 14C19 10.134 15.866 7 12 7C8.13401 7 5 10.134 5 14C5 17.866 8.13401 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Cari Lagi</span>
+            </button>
+        </div>
+
+        <div id="error" class="error hidden">
+            <div class="error-content">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h3>Data tidak ditemukan</h3>
+                <p id="errorMessage">Mohon periksa kembali 3 digit terakhir NIM yang Anda masukkan</p>
+                <button id="tryAgainBtn" class="try-again-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21M12 21C7.02944 21 3 16.9706 3 12M12 21C15.866 21 19 17.866 19 14C19 10.134 15.866 7 12 7C8.13401 7 5 10.134 5 14C5 17.866 8.13401 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Coba Lagi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load CSV data as embedded (optional, untuk offline use) -->
+    <script>
+        // Data CSV embedded - akan digunakan jika fetch gagal
+        // Jika Anda ingin embed data CSV langsung, uncomment dan isi variabel berikut:
+        // const embeddedCSVData = `No,NIM,Nama Mahasiswa,...`;
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
+
