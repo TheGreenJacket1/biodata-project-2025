@@ -1,3 +1,7 @@
+/* ============================================
+   CRITICAL CSS (also inlined in HTML)
+   ============================================ */
+
 * {
   margin: 0;
   padding: 0;
@@ -22,7 +26,6 @@
   --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* Simple static background - NO animations */
 body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -60,7 +63,10 @@ body {
   display: none !important;
 }
 
-/* Header */
+/* ============================================
+   HEADER
+   ============================================ */
+
 .header {
   text-align: center;
   margin-bottom: 3rem;
@@ -107,20 +113,24 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s, border-color 0.2s;
+  /* Only transform/opacity for GPU-accelerated transitions */
+  transition: opacity 0.2s, transform 0.2s;
   font-family: inherit;
 }
 
 .update-csv-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--primary);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .update-csv-btn svg {
   flex-shrink: 0;
 }
 
-/* Search Section */
+/* ============================================
+   SEARCH SECTION
+   ============================================ */
+
 .search-section {
   margin-bottom: 2rem;
 }
@@ -141,7 +151,8 @@ body {
   border-radius: 12px;
   padding: 4px 4px 4px 16px;
   border: 2px solid transparent;
-  transition: border-color 0.2s;
+  /* Only opacity for focus transition */
+  transition: opacity 0.2s;
 }
 
 .input-wrapper:focus-within {
@@ -185,12 +196,20 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: box-shadow 0.2s;
+  /* Only transform/opacity - GPU accelerated */
+  transition: transform 0.2s, opacity 0.2s;
   font-family: inherit;
 }
 
 .search-button:hover {
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .hint {
@@ -206,7 +225,10 @@ body {
   flex-shrink: 0;
 }
 
-/* Loading */
+/* ============================================
+   LOADING - Only transform animation
+   ============================================ */
+
 .loading {
   text-align: center;
   padding: 3rem 2rem;
@@ -218,6 +240,7 @@ body {
   border: 4px solid var(--bg-tertiary);
   border-top-color: var(--primary);
   border-radius: 50%;
+  /* Only transform - GPU accelerated */
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
 }
@@ -233,7 +256,10 @@ body {
   font-size: 1rem;
 }
 
-/* Result */
+/* ============================================
+   RESULT
+   ============================================ */
+
 .result-header {
   display: flex;
   align-items: center;
@@ -290,6 +316,7 @@ body {
   font-weight: 500;
   word-break: break-word;
   user-select: text;
+  margin: 0;
 }
 
 .search-again-btn {
@@ -306,16 +333,20 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: background 0.2s, border-color 0.2s;
+  /* Only transform/opacity */
+  transition: transform 0.2s, opacity 0.2s;
   font-family: inherit;
 }
 
 .search-again-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--primary);
+  transform: translateY(-2px);
+  opacity: 0.9;
 }
 
-/* Error */
+/* ============================================
+   ERROR
+   ============================================ */
+
 .error {
   text-align: center;
   padding: 3rem 2rem;
@@ -334,7 +365,7 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.error-content h3 {
+.error-content h2 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
   color: var(--text-primary);
@@ -357,15 +388,20 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: box-shadow 0.2s;
+  /* Only transform/opacity */
+  transition: transform 0.2s, opacity 0.2s;
   font-family: inherit;
 }
 
 .try-again-btn:hover {
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  opacity: 0.95;
 }
 
-/* Footer */
+/* ============================================
+   FOOTER
+   ============================================ */
+
 .footer {
   margin-top: 3rem;
   padding-top: 2rem;
@@ -402,7 +438,10 @@ body {
   color: var(--text-primary);
 }
 
-/* File upload section */
+/* ============================================
+   FILE UPLOAD SECTION
+   ============================================ */
+
 .file-upload-section,
 #fileUploadSection {
   margin-top: 1rem;
@@ -434,13 +473,15 @@ body {
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: box-shadow 0.2s;
+  /* Only transform/opacity */
+  transition: transform 0.2s, opacity 0.2s;
   font-family: inherit;
 }
 
 .file-upload-section label:hover,
 #fileUploadSection label:hover {
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  opacity: 0.95;
 }
 
 .file-upload-section input[type="file"],
@@ -448,7 +489,10 @@ body {
   display: none;
 }
 
-/* Sort/Group Section */
+/* ============================================
+   SORT/GROUP SECTION
+   ============================================ */
+
 .sort-group-section {
   margin-bottom: 2rem;
 }
@@ -514,7 +558,8 @@ body {
   font-size: 0.95rem;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.2s;
+  /* Only opacity transition */
+  transition: opacity 0.2s;
   outline: none;
 }
 
@@ -535,13 +580,15 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: box-shadow 0.2s;
+  /* Only transform/opacity */
+  transition: transform 0.2s, opacity 0.2s;
   font-family: inherit;
   white-space: nowrap;
 }
 
 .apply-btn:hover {
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  opacity: 0.95;
 }
 
 .reset-btn {
@@ -556,17 +603,21 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: border-color 0.2s, color 0.2s;
+  /* Only transform/opacity */
+  transition: transform 0.2s, opacity 0.2s;
   font-family: inherit;
   white-space: nowrap;
 }
 
 .reset-btn:hover {
-  border-color: var(--warning);
-  color: var(--warning);
+  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
-/* Sorted Data Display */
+/* ============================================
+   SORTED DATA DISPLAY
+   ============================================ */
+
 .sorted-data-display {
   margin-top: 2rem;
 }
@@ -603,12 +654,13 @@ body {
   border-radius: 12px;
   padding: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  /* Only transform/opacity - no layout changes */
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .data-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: var(--primary);
+  transform: translateY(-4px);
+  opacity: 0.95;
 }
 
 .data-card:focus {
@@ -677,7 +729,10 @@ body {
   opacity: 0.8;
 }
 
-/* Detail Modal */
+/* ============================================
+   DETAIL MODAL
+   ============================================ */
+
 .detail-modal {
   position: fixed;
   top: 0;
@@ -702,6 +757,8 @@ body {
   background: rgba(0, 0, 0, 0.7);
   cursor: pointer;
   z-index: 1;
+  /* Only opacity for fade */
+  transition: opacity 0.2s;
 }
 
 .detail-modal-content {
@@ -719,6 +776,8 @@ body {
   border: 1px solid var(--border);
   z-index: 2;
   overflow: visible;
+  /* Only transform for slide-in */
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .detail-modal-header {
@@ -752,13 +811,14 @@ body {
   justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
-  transition: background 0.2s;
+  /* Only transform/opacity */
+  transition: transform 0.2s, opacity 0.2s;
   flex-shrink: 0;
 }
 
 .detail-modal-close:hover {
-  background: var(--error);
-  color: white;
+  transform: rotate(90deg);
+  opacity: 0.9;
 }
 
 .detail-modal-body {
@@ -799,19 +859,19 @@ body {
   line-height: 1.6;
 }
 
-/* Button disabled state */
-.search-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+/* ============================================
+   FOCUS VISIBLE
+   ============================================ */
 
-/* Focus visible */
 *:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Touch device optimizations */
+/* ============================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ============================================ */
+
 @media (hover: none) and (pointer: coarse) {
   .search-button,
   .search-again-btn,
@@ -826,7 +886,10 @@ body {
   }
 }
 
-/* Responsive */
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
 @media (max-width: 768px) {
   body {
     padding: 12px;

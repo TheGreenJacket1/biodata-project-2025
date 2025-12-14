@@ -5,15 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Aplikasi pencarian biodata mahasiswa Informatika 2025 UPN Veteran Yogyakarta" />
     <title>Pencarian Biodata Mahasiswa IF 2025 - UPN Veteran Yogyakarta</title>
-    <link rel="stylesheet" href="style.css" />
+    
+    <!-- Critical CSS inline untuk first paint cepat -->
+    <style>
+      :root{--bg-primary:#0f172a;--text-primary:#f1f5f9}
+      body{margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+      .container{width:100%;max-width:900px;padding:20px}
+      .hidden{display:none!important}
+    </style>
+    
+    <!-- Non-critical CSS dengan preload -->
+    <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="style.css"></noscript>
+    
+    <!-- Font dengan display=swap sudah non-blocking -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div class="container" id="main-content">
-      <div class="header">
-        <div class="logo">
+    <div class="container">
+      <!-- Header sebagai banner -->
+      <header class="header" role="banner">
+        <div class="logo" aria-hidden="true">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -22,72 +36,183 @@
         </div>
         <h1>Pencarian Biodata Mahasiswa</h1>
         <p class="subtitle">Informatika 2025 - UPN Veteran Yogyakarta</p>
-        <button id="updateCsvBtn" class="update-csv-btn hidden">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button id="updateCsvBtn" class="update-csv-btn hidden" type="button" aria-label="Update file CSV">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M17 8L12 3M12 3L7 8M12 3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>Update CSV</span>
         </button>
-      </div>
+      </header>
 
-      <!-- Sort/Group Section -->
-      <div id="sortGroupSection" class="sort-group-section hidden">
-        <div class="sort-group-box">
-          <h3 class="sort-group-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 6H21M7 12H21M11 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Urutkan / Kelompokkan Data
-          </h3>
-          <div class="sort-group-controls">
-            <div class="control-group">
-              <label for="sortBy" class="control-label">Urutkan berdasarkan:</label>
-              <select id="sortBy" class="control-select">
-                <option value="none">Tidak diurutkan</option>
-                <option value="nim">NIM (Ascending)</option>
-                <option value="nim-desc">NIM (Descending)</option>
-                <option value="nama">Nama (A-Z)</option>
-                <option value="nama-desc">Nama (Z-A)</option>
-                <option value="kelompok">Kelompok (A-Z)</option>
-                <option value="no">No (Ascending)</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label for="groupBy" class="control-label">Kelompokkan berdasarkan:</label>
-              <select id="groupBy" class="control-select">
-                <option value="none">Tidak dikelompokkan</option>
-                <option value="kelompok">Kelompok</option>
-                <option value="golonganDarah">Golongan Darah</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label for="filterKelompok" class="control-label">Filter Kelompok:</label>
-              <select id="filterKelompok" class="control-select">
-                <option value="all">Semua Kelompok</option>
-              </select>
-            </div>
-            <div class="sort-group-button-group">
-              <button id="applySortGroupBtn" class="apply-btn" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Terapkan
-              </button>
-              <button id="resetSortGroupBtn" class="reset-btn" type="button">Reset</button>
+      <!-- Konten utama -->
+      <main id="main-content">
+        <!-- Sort/Group Section -->
+        <section id="sortGroupSection" class="sort-group-section hidden" aria-labelledby="sort-group-heading">
+          <div class="sort-group-box">
+            <h2 id="sort-group-heading" class="sort-group-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 6H21M7 12H21M11 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Urutkan / Kelompokkan Data
+            </h2>
+            <div class="sort-group-controls">
+              <div class="control-group">
+                <label for="sortBy" class="control-label">Urutkan berdasarkan:</label>
+                <select id="sortBy" class="control-select">
+                  <option value="none">Tidak diurutkan</option>
+                  <option value="nim">NIM (Ascending)</option>
+                  <option value="nim-desc">NIM (Descending)</option>
+                  <option value="nama">Nama (A-Z)</option>
+                  <option value="nama-desc">Nama (Z-A)</option>
+                  <option value="kelompok">Kelompok (A-Z)</option>
+                  <option value="no">No (Ascending)</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="groupBy" class="control-label">Kelompokkan berdasarkan:</label>
+                <select id="groupBy" class="control-select">
+                  <option value="none">Tidak dikelompokkan</option>
+                  <option value="kelompok">Kelompok</option>
+                  <option value="golonganDarah">Golongan Darah</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="filterKelompok" class="control-label">Filter Kelompok:</label>
+                <select id="filterKelompok" class="control-select">
+                  <option value="all">Semua Kelompok</option>
+                </select>
+              </div>
+              <div class="sort-group-button-group">
+                <button id="applySortGroupBtn" class="apply-btn" type="button">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Terapkan
+                </button>
+                <button id="resetSortGroupBtn" class="reset-btn" type="button">Reset</button>
+              </div>
             </div>
           </div>
-        </div>
-        <div id="sortedDataDisplay" class="sorted-data-display hidden"></div>
-      </div>
+          <div id="sortedDataDisplay" class="sorted-data-display hidden"></div>
+        </section>
 
-      <!-- Detail Modal -->
-      <div id="detailModal" class="detail-modal hidden">
+        <!-- Search Section -->
+        <section class="search-section" aria-labelledby="search-heading">
+          <h2 id="search-heading" class="sr-only">Pencarian NIM</h2>
+          <div class="search-box">
+            <label for="nimInput" class="sr-only">Masukkan 3 digit terakhir NIM</label>
+            <div class="input-wrapper">
+              <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <input type="text" id="nimInput" inputmode="numeric" pattern="[0-9]{3}" placeholder="Masukkan 3 digit terakhir NIM (contoh: 001)" maxlength="3" autocomplete="off"/>
+              <button id="searchBtn" class="search-button" type="button">
+                <span>Cari</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <p class="hint">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Masukkan 3 digit terakhir dari NIM Anda</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading hidden" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Mencari data...</p>
+        </div>
+
+        <!-- Result Section -->
+        <section id="result" class="result hidden" aria-labelledby="result-heading">
+          <div class="result-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h2 id="result-heading">Data Ditemukan</h2>
+          </div>
+          <div class="result-content">
+            <dl class="info-card">
+              <div class="info-item">
+                <dt class="info-label">No</dt>
+                <dd class="info-value" id="no"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">NIM</dt>
+                <dd class="info-value" id="nim"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">Nama Mahasiswa</dt>
+                <dd class="info-value" id="nama"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">Kelompok</dt>
+                <dd class="info-value" id="kelompok"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">Tempat, Tanggal Lahir</dt>
+                <dd class="info-value" id="ttl"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">Instagram</dt>
+                <dd class="info-value" id="instagram"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">Hobi</dt>
+                <dd class="info-value" id="hobi"></dd>
+              </div>
+              <div class="info-item">
+                <dt class="info-label">Golongan Darah</dt>
+                <dd class="info-value" id="golonganDarah"></dd>
+              </div>
+              <div class="info-item full-width">
+                <dt class="info-label">Alamat saat ini</dt>
+                <dd class="info-value" id="alamat"></dd>
+              </div>
+            </dl>
+          </div>
+          <button id="searchAgainBtn" class="search-again-btn" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21M12 21C7.02944 21 3 16.9706 3 12M12 21C15.866 21 19 17.866 19 14C19 10.134 15.866 7 12 7C8.13401 7 5 10.134 5 14C5 17.866 8.13401 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Cari Lagi</span>
+          </button>
+        </section>
+
+        <!-- Error Section -->
+        <section id="error" class="error hidden" role="alert" aria-labelledby="error-heading">
+          <div class="error-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <h2 id="error-heading">Data tidak ditemukan</h2>
+            <p id="errorMessage">Mohon periksa kembali 3 digit terakhir NIM yang Anda masukkan</p>
+            <button id="tryAgainBtn" class="try-again-btn" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21M12 21C7.02944 21 3 16.9706 3 12M12 21C15.866 21 19 17.866 19 14C19 10.134 15.866 7 12 7C8.13401 7 5 10.134 5 14C5 17.866 8.13401 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Coba Lagi</span>
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <!-- Detail Modal (di luar main karena overlay) -->
+      <div id="detailModal" class="detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
         <div class="detail-modal-overlay"></div>
         <div class="detail-modal-content">
           <div class="detail-modal-header">
-            <h2>Detail Biodata</h2>
-            <button id="closeDetailModal" class="detail-modal-close" type="button">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <h2 id="modal-heading">Detail Biodata</h2>
+            <button id="closeDetailModal" class="detail-modal-close" type="button" aria-label="Tutup modal">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
@@ -96,111 +221,8 @@
         </div>
       </div>
 
-      <div class="search-section">
-        <div class="search-box">
-          <label for="nimInput" class="sr-only">Masukkan 3 digit terakhir NIM</label>
-          <div class="input-wrapper">
-            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-              <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <input type="text" id="nimInput" inputmode="numeric" pattern="[0-9]{3}" placeholder="Masukkan 3 digit terakhir NIM (contoh: 001)" maxlength="3" autocomplete="off"/>
-            <button id="searchBtn" class="search-button" type="button">
-              <span>Cari</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="hint">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <span>Masukkan 3 digit terakhir dari NIM Anda</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="loading" class="loading hidden">
-        <div class="spinner"></div>
-        <p>Mencari data...</p>
-      </div>
-
-      <div id="result" class="result hidden">
-        <div class="result-header">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <h2>Data Ditemukan</h2>
-        </div>
-        <div class="result-content">
-          <div class="info-card">
-            <div class="info-item">
-              <span class="info-label">No</span>
-              <span class="info-value" id="no"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">NIM</span>
-              <span class="info-value" id="nim"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Nama Mahasiswa</span>
-              <span class="info-value" id="nama"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Kelompok</span>
-              <span class="info-value" id="kelompok"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Tempat, Tanggal Lahir</span>
-              <span class="info-value" id="ttl"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Instagram</span>
-              <span class="info-value" id="instagram"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Hobi</span>
-              <span class="info-value" id="hobi"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Golongan Darah</span>
-              <span class="info-value" id="golonganDarah"></span>
-            </div>
-            <div class="info-item full-width">
-              <span class="info-label">Alamat saat ini</span>
-              <span class="info-value" id="alamat"></span>
-            </div>
-          </div>
-        </div>
-        <button id="searchAgainBtn" class="search-again-btn" type="button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21M12 21C7.02944 21 3 16.9706 3 12M12 21C15.866 21 19 17.866 19 14C19 10.134 15.866 7 12 7C8.13401 7 5 10.134 5 14C5 17.866 8.13401 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Cari Lagi</span>
-        </button>
-      </div>
-
-      <div id="error" class="error hidden">
-        <div class="error-content">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <h3>Data tidak ditemukan</h3>
-          <p id="errorMessage">Mohon periksa kembali 3 digit terakhir NIM yang Anda masukkan</p>
-          <button id="tryAgainBtn" class="try-again-btn" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21M12 21C7.02944 21 3 16.9706 3 12M12 21C15.866 21 19 17.866 19 14C19 10.134 15.866 7 12 7C8.13401 7 5 10.134 5 14C5 17.866 8.13401 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Coba Lagi</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Footer -->
-      <footer class="footer">
+      <footer class="footer" role="contentinfo">
         <p class="footer-text">
           <span id="dataInfo" class="data-info"></span>
           <span class="footer-separator">•</span>
@@ -209,6 +231,7 @@
       </footer>
     </div>
 
-    <script src="app.js"></script>
+    <!-- JS dengan defer - non-blocking -->
+    <script src="app.js" defer></script>
   </body>
 </html>
