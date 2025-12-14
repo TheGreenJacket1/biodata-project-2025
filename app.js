@@ -355,13 +355,32 @@ if (searchBtn) {
   });
 }
 
+// Debounce timer for auto-search
+let autoSearchTimer = null;
+
 if (nimInput) {
   nimInput.addEventListener("input", (e) => {
     e.target.value = validateInput(e.target.value);
     
-    // Auto-search when 3 digits are entered
+    // Clear previous timer
+    if (autoSearchTimer) {
+      clearTimeout(autoSearchTimer);
+      autoSearchTimer = null;
+    }
+    
+    // If 3 digits are entered, search immediately
     if (e.target.value.length === 3 && isDataLoaded) {
       searchBiodata(e.target.value);
+    } 
+    // If less than 3 digits but has some input, auto-format and search after delay
+    else if (e.target.value.length > 0 && e.target.value.length < 3 && isDataLoaded) {
+      autoSearchTimer = setTimeout(() => {
+        const formatted = formatNIMInput(e.target.value);
+        e.target.value = formatted;
+        if (formatted.length === 3) {
+          searchBiodata(formatted);
+        }
+      }, 800); // 800ms delay before auto-format and search
     }
   });
 
