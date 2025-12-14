@@ -358,6 +358,11 @@ if (searchBtn) {
 if (nimInput) {
   nimInput.addEventListener("input", (e) => {
     e.target.value = validateInput(e.target.value);
+    
+    // Auto-search when 3 digits are entered
+    if (e.target.value.length === 3 && isDataLoaded) {
+      searchBiodata(e.target.value);
+    }
   });
 
   nimInput.addEventListener("blur", (e) => {
