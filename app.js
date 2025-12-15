@@ -3,6 +3,33 @@ let parsedData = [];
 let isDataLoaded = false;
 let dataLoadTime = null;
 
+// Fuzzy search variables
+let fuseInstance = null;
+let searchMode = 'nim'; // 'nim' or 'fuzzy'
+let activeFieldFilter = 'all';
+let fuzzyDebounceTimer = null;
+const FUZZY_DEBOUNCE_DELAY = 300;
+
+// Fuse.js configuration for optimal fuzzy matching
+const fuseOptions = {
+  includeScore: true,
+  includeMatches: true,
+  threshold: 0.4,           // 0 = exact match, 1 = match anything
+  minMatchCharLength: 2,
+  ignoreLocation: true,
+  useExtendedSearch: false,
+  findAllMatches: true,
+  keys: [
+    { name: 'nama', weight: 0.3 },
+    { name: 'ttl', weight: 0.15 },
+    { name: 'instagram', weight: 0.15 },
+    { name: 'hobi', weight: 0.1 },
+    { name: 'golonganDarah', weight: 0.1 },
+    { name: 'alamat', weight: 0.1 },
+    { name: 'kelompok', weight: 0.1 }
+  ]
+};
+
 // DOM elements
 const nimInput = document.getElementById("nimInput");
 const searchBtn = document.getElementById("searchBtn");
@@ -23,6 +50,13 @@ const sortedDataDisplay = document.getElementById("sortedDataDisplay");
 const detailModal = document.getElementById("detailModal");
 const closeDetailModal = document.getElementById("closeDetailModal");
 const detailModalBody = document.getElementById("detailModalBody");
+
+// Fuzzy search DOM elements
+const modeNimBtn = document.getElementById("modeNimBtn");
+const modeFuzzyBtn = document.getElementById("modeFuzzyBtn");
+const filterChips = document.getElementById("filterChips");
+const fuzzyResults = document.getElementById("fuzzyResults");
+const searchHint = document.getElementById("searchHint");
 
 // Parse CSV line with quote support
 function parseCSVLine(line) {
@@ -97,6 +131,7 @@ function parseCSVText(text) {
   }
 
   populateKelompokFilter();
+  buildFuseIndex();
 }
 
 // Update data info in footer
@@ -261,6 +296,405 @@ function searchBiodata(last3Digits) {
   }
 }
 
+// ================================
+// FUZZY SEARCH FUNCTIONS
+// ================================
+
+// Build Fuse.js search index
+function buildFuseIndex() {
+  if (typeof Fuse === 'undefined') {
+    console.warn('Fuse.js not loaded, fuzzy search will not be available');
+    return;
+  }
+  
+  fuseInstance = new Fuse(parsedData, fuseOptions);
+  console.log('Fuse.js index built with', parsedData.length, 'items');
+}
+
+// Get Fuse options for specific field
+function getFuseOptionsForField(field) {
+  if (field === 'all') {
+    return fuseOptions;
+  }
+  
+  return {
+    ...fuseOptions,
+    keys: [{ name: field, weight: 1.0 }]
+  };
+}
+
+// Perform fuzzy search
+function performFuzzySearch(query) {
+  if (!query || query.trim().length < 2) {
+    hideFuzzyResults();
+    return;
+  }
+  
+  if (!fuseInstance || !isDataLoaded) {
+    return;
+  }
+  
+  // Rebuild index if field filter changed
+  let searchInstance = fuseInstance;
+  if (activeFieldFilter !== 'all') {
+    const fieldOptions = getFuseOptionsForField(activeFieldFilter);
+    searchInstance = new Fuse(parsedData, fieldOptions);
+  }
+  
+  const results = searchInstance.search(query.trim());
+  
+  // Limit to top 20 results
+  const limitedResults = results.slice(0, 20);
+  
+  if (limitedResults.length > 0) {
+    displayFuzzyResults(limitedResults, query.trim());
+  } else {
+    displayNoResults(query.trim());
+  }
+}
+
+// Display fuzzy search results
+function displayFuzzyResults(results, query) {
+  if (!fuzzyResults) return;
+  
+  // Hide other result containers
+  if (result) result.classList.add("hidden");
+  if (error) error.classList.add("hidden");
+  
+  fuzzyResults.innerHTML = '';
+  fuzzyResults.classList.remove('hidden');
+  
+  // Header
+  const header = document.createElement('div');
+  header.className = 'fuzzy-results-header';
+  header.innerHTML = `
+    <div class="fuzzy-results-count">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>${results.length} hasil ditemukan</span>
+    </div>
+    <div class="fuzzy-results-query">
+      Pencarian: <strong>"${sanitizeText(query)}"</strong>
+    </div>
+  `;
+  fuzzyResults.appendChild(header);
+  
+  // Results grid
+  const grid = document.createElement('div');
+  grid.className = 'fuzzy-results-grid';
+  
+  results.forEach((resultItem) => {
+    const card = createFuzzyResultCard(resultItem, query);
+    grid.appendChild(card);
+  });
+  
+  fuzzyResults.appendChild(grid);
+}
+
+// Create fuzzy result card
+function createFuzzyResultCard(resultItem, query) {
+  const item = resultItem.item;
+  const score = resultItem.score;
+  const matches = resultItem.matches || [];
+  
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+  
+  // Determine score class
+  let scoreClass = '';
+  let scoreLabel = '';
+  if (score < 0.2) {
+    scoreClass = 'high';
+    scoreLabel = 'Sangat cocok';
+  } else if (score < 0.4) {
+    scoreClass = 'medium';
+    scoreLabel = 'Cocok';
+  } else {
+    scoreLabel = 'Mirip';
+  }
+  
+  // Find main match field
+  let matchInfo = '';
+  if (matches.length > 0) {
+    const match = matches[0];
+    const fieldLabels = {
+      nama: 'Nama',
+      ttl: 'TTL',
+      instagram: 'Instagram',
+      hobi: 'Hobi',
+      golonganDarah: 'Gol. Darah',
+      alamat: 'Alamat',
+      kelompok: 'Kelompok'
+    };
+    const fieldLabel = fieldLabels[match.key] || match.key;
+    const matchValue = highlightMatch(match.value, match.indices);
+    matchInfo = `<div class="result-card-match"><strong>${fieldLabel}:</strong> ${matchValue}</div>`;
+  }
+  
+  card.innerHTML = `
+    <span class="result-card-score ${scoreClass}">${scoreLabel}</span>
+    <div class="result-card-header">
+      <span class="result-card-nim">${sanitizeText(item.nim) || '-'}</span>
+      <span class="result-card-no">#${sanitizeText(item.no) || '-'}</span>
+    </div>
+    <div class="result-card-body">
+      <h4 class="result-card-name">${sanitizeText(item.nama) || '-'}</h4>
+      ${matchInfo}
+    </div>
+  `;
+  
+  // Click handler
+  card.addEventListener('click', () => showDetailModal(item));
+  card.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      showDetailModal(item);
+    }
+  });
+  
+  return card;
+}
+
+// Highlight match in text
+function highlightMatch(text, indices) {
+  if (!text || !indices || indices.length === 0) {
+    return sanitizeText(text);
+  }
+  
+  let result = '';
+  let lastIndex = 0;
+  
+  // Sort indices by start position
+  const sortedIndices = indices.sort((a, b) => a[0] - b[0]);
+  
+  sortedIndices.forEach(([start, end]) => {
+    // Add text before match
+    result += sanitizeText(text.substring(lastIndex, start));
+    // Add highlighted match
+    result += `<span class="match-highlight">${sanitizeText(text.substring(start, end + 1))}</span>`;
+    lastIndex = end + 1;
+  });
+  
+  // Add remaining text
+  result += sanitizeText(text.substring(lastIndex));
+  
+  return result;
+}
+
+// Display no results with suggestions
+function displayNoResults(query) {
+  if (!fuzzyResults) return;
+  
+  // Hide other result containers
+  if (result) result.classList.add("hidden");
+  if (error) error.classList.add("hidden");
+  
+  fuzzyResults.innerHTML = '';
+  fuzzyResults.classList.remove('hidden');
+  
+  // Get suggestions (similar names or partial matches)
+  const suggestions = getSuggestions(query);
+  
+  let suggestionsHTML = '';
+  if (suggestions.length > 0) {
+    suggestionsHTML = `
+      <div class="suggestions-section">
+        <div class="suggestions-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.071 0l-.344.344a2.5 2.5 0 00-.732 1.767V18.5a1.5 1.5 0 01-1.5 1.5h-2.5a1.5 1.5 0 01-1.5-1.5v-.282a2.5 2.5 0 00-.732-1.767l-.344-.344z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Mungkin yang Anda maksud:
+        </div>
+        <div class="suggestions-list">
+          ${suggestions.map(s => `<button type="button" class="suggestion-item" data-suggestion="${sanitizeText(s)}">${sanitizeText(s)}</button>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  const noResultsContent = `
+    <div class="no-results">
+      <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+        <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M8 8l6 6M14 8l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h3>Tidak ada hasil untuk "${sanitizeText(query)}"</h3>
+      <p class="no-results-message">Coba periksa ejaan atau gunakan kata kunci yang berbeda</p>
+      
+      ${suggestionsHTML}
+      
+      <div class="search-tips">
+        <div class="search-tips-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Tips Pencarian
+        </div>
+        <ul>
+          <li>Gunakan nama depan saja, misal "Ahmad" bukan "Ahmad Rizki"</li>
+          <li>Coba cari berdasarkan hobi atau alamat</li>
+          <li>Gunakan filter untuk mempersempit pencarian</li>
+          <li>Periksa typo pada kata yang Anda ketik</li>
+        </ul>
+      </div>
+      
+      <div class="quick-actions">
+        <button type="button" class="quick-action-btn" id="clearSearchBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Hapus Pencarian
+        </button>
+        <button type="button" class="quick-action-btn primary" id="showAllDataBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6H20M4 10H20M4 14H20M4 18H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Lihat Semua Data
+        </button>
+      </div>
+    </div>
+  `;
+  
+  fuzzyResults.innerHTML = noResultsContent;
+  
+  // Attach event handlers
+  const suggestionButtons = fuzzyResults.querySelectorAll('.suggestion-item');
+  suggestionButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const suggestion = btn.dataset.suggestion;
+      if (nimInput) {
+        nimInput.value = suggestion;
+        performFuzzySearch(suggestion);
+      }
+    });
+  });
+  
+  const clearBtn = fuzzyResults.querySelector('#clearSearchBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (nimInput) nimInput.value = '';
+      hideFuzzyResults();
+      nimInput.focus();
+    });
+  }
+  
+  const showAllBtn = fuzzyResults.querySelector('#showAllDataBtn');
+  if (showAllBtn) {
+    showAllBtn.addEventListener('click', () => {
+      hideFuzzyResults();
+      // Trigger sort/group section to show all data
+      if (applySortGroupBtn) applySortGroupBtn.click();
+    });
+  }
+}
+
+// Get search suggestions based on query
+function getSuggestions(query) {
+  if (!parsedData || parsedData.length === 0) return [];
+  
+  const queryLower = query.toLowerCase();
+  const suggestions = new Set();
+  
+  // Find names that start with similar letters
+  parsedData.forEach(item => {
+    if (item.nama) {
+      const namaLower = item.nama.toLowerCase();
+      // Check if first letter matches
+      if (namaLower[0] === queryLower[0]) {
+        suggestions.add(item.nama.split(' ')[0]); // First name only
+      }
+      // Check if any word starts with query
+      const words = namaLower.split(' ');
+      words.forEach(word => {
+        if (word.startsWith(queryLower.substring(0, 2))) {
+          suggestions.add(item.nama.split(' ')[0]);
+        }
+      });
+    }
+  });
+  
+  // Return top 5 unique suggestions
+  return Array.from(suggestions).slice(0, 5);
+}
+
+// Hide fuzzy results
+function hideFuzzyResults() {
+  if (fuzzyResults) {
+    fuzzyResults.classList.add('hidden');
+    fuzzyResults.innerHTML = '';
+  }
+}
+
+// Switch search mode
+function setSearchMode(mode) {
+  searchMode = mode;
+  
+  // Update UI
+  if (modeNimBtn) {
+    modeNimBtn.classList.toggle('active', mode === 'nim');
+  }
+  if (modeFuzzyBtn) {
+    modeFuzzyBtn.classList.toggle('active', mode === 'fuzzy');
+  }
+  
+  // Toggle filter chips
+  if (filterChips) {
+    filterChips.classList.toggle('hidden', mode === 'nim');
+  }
+  
+  // Update input attributes
+  if (nimInput) {
+    if (mode === 'nim') {
+      nimInput.setAttribute('inputmode', 'numeric');
+      nimInput.setAttribute('pattern', '[0-9]{3}');
+      nimInput.setAttribute('maxlength', '3');
+      nimInput.placeholder = 'Masukkan 3 digit terakhir NIM (contoh: 001)';
+    } else {
+      nimInput.removeAttribute('inputmode');
+      nimInput.removeAttribute('pattern');
+      nimInput.setAttribute('maxlength', '100');
+      nimInput.placeholder = 'Cari nama, hobi, alamat, atau data lainnya...';
+    }
+    nimInput.value = '';
+    nimInput.focus();
+  }
+  
+  // Update hint
+  if (searchHint) {
+    const hintText = searchHint.querySelector('span');
+    if (hintText) {
+      hintText.textContent = mode === 'nim' 
+        ? 'Masukkan 3 digit terakhir dari NIM Anda' 
+        : 'Ketik minimal 2 karakter untuk mencari (mendukung typo)';
+    }
+  }
+  
+  // Hide results
+  hideAllResults();
+  hideFuzzyResults();
+}
+
+// Set active field filter
+function setFieldFilter(field) {
+  activeFieldFilter = field;
+  
+  // Update chip UI
+  const chips = document.querySelectorAll('.filter-chip');
+  chips.forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.field === field);
+  });
+  
+  // Re-run search if there's a query
+  if (nimInput && nimInput.value.trim().length >= 2) {
+    performFuzzySearch(nimInput.value);
+  }
+}
+
 // Display result
 function displayResult(data) {
   const elements = {
@@ -319,6 +753,7 @@ function hideAllResults() {
 // Reset search
 function resetSearch() {
   hideAllResults();
+  hideFuzzyResults();
   if (sortedDataDisplay) sortedDataDisplay.classList.add("hidden");
   if (nimInput) {
     nimInput.value = "";
@@ -341,16 +776,29 @@ function formatNIMInput(value) {
 if (searchBtn) {
   searchBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    let input = validateInput(nimInput ? nimInput.value : "");
-    if (input.length > 0 && input.length < 3) {
-      input = formatNIMInput(input);
-      if (nimInput) nimInput.value = input;
-    }
-    if (input.length === 3) {
-      searchBiodata(input);
+    
+    if (searchMode === 'fuzzy') {
+      // Fuzzy search mode
+      const query = nimInput ? nimInput.value.trim() : "";
+      if (query.length >= 2) {
+        performFuzzySearch(query);
+      } else if (query.length > 0) {
+        alert("Masukkan minimal 2 karakter untuk pencarian");
+        if (nimInput) nimInput.focus();
+      }
     } else {
-      alert("Masukkan 3 digit terakhir NIM");
-      if (nimInput) nimInput.focus();
+      // NIM search mode
+      let input = validateInput(nimInput ? nimInput.value : "");
+      if (input.length > 0 && input.length < 3) {
+        input = formatNIMInput(input);
+        if (nimInput) nimInput.value = input;
+      }
+      if (input.length === 3) {
+        searchBiodata(input);
+      } else {
+        alert("Masukkan 3 digit terakhir NIM");
+        if (nimInput) nimInput.focus();
+      }
     }
   });
 }
@@ -360,37 +808,60 @@ let autoSearchTimer = null;
 
 if (nimInput) {
   nimInput.addEventListener("input", (e) => {
-    e.target.value = validateInput(e.target.value);
-    
     // Clear previous timer
     if (autoSearchTimer) {
       clearTimeout(autoSearchTimer);
       autoSearchTimer = null;
     }
+    if (fuzzyDebounceTimer) {
+      clearTimeout(fuzzyDebounceTimer);
+      fuzzyDebounceTimer = null;
+    }
     
-    // If 3 digits are entered, search immediately
-    if (e.target.value.length === 3 && isDataLoaded) {
-      searchBiodata(e.target.value);
-    } 
-    // If less than 3 digits but has some input, auto-format and search after delay
-    else if (e.target.value.length > 0 && e.target.value.length < 3 && isDataLoaded) {
-      autoSearchTimer = setTimeout(() => {
-        const formatted = formatNIMInput(e.target.value);
-        e.target.value = formatted;
-        if (formatted.length === 3) {
-          searchBiodata(formatted);
-        }
-      }, 800); // 800ms delay before auto-format and search
+    if (searchMode === 'fuzzy') {
+      // Fuzzy search mode - debounced
+      const query = e.target.value.trim();
+      
+      if (query.length === 0) {
+        hideFuzzyResults();
+        return;
+      }
+      
+      if (query.length >= 2) {
+        fuzzyDebounceTimer = setTimeout(() => {
+          performFuzzySearch(query);
+        }, FUZZY_DEBOUNCE_DELAY);
+      }
+    } else {
+      // NIM search mode
+      e.target.value = validateInput(e.target.value);
+      
+      // If 3 digits are entered, search immediately
+      if (e.target.value.length === 3 && isDataLoaded) {
+        searchBiodata(e.target.value);
+      } 
+      // If less than 3 digits but has some input, auto-format and search after delay
+      else if (e.target.value.length > 0 && e.target.value.length < 3 && isDataLoaded) {
+        autoSearchTimer = setTimeout(() => {
+          const formatted = formatNIMInput(e.target.value);
+          e.target.value = formatted;
+          if (formatted.length === 3) {
+            searchBiodata(formatted);
+          }
+        }, 800); // 800ms delay before auto-format and search
+      }
     }
   });
 
   nimInput.addEventListener("blur", (e) => {
-    const value = e.target.value;
-    if (value && value.length > 0 && value.length < 3) {
-      const formatted = formatNIMInput(value);
-      e.target.value = formatted;
-      if (formatted.length === 3) {
-        searchBiodata(formatted);
+    if (searchMode !== 'fuzzy') {
+      const value = e.target.value;
+      if (value && value.length > 0 && value.length < 3) {
+        const formatted = formatNIMInput(value);
+        e.target.value = formatted;
+        if (formatted.length === 3) {
+          searchBiodata(formatted);
+        }
       }
     }
   });
@@ -398,15 +869,23 @@ if (nimInput) {
   nimInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      let input = validateInput(e.target.value);
-      if (input.length > 0 && input.length < 3) {
-        input = formatNIMInput(input);
-        e.target.value = input;
-      }
-      if (input.length === 3) {
-        searchBiodata(input);
+      
+      if (searchMode === 'fuzzy') {
+        const query = e.target.value.trim();
+        if (query.length >= 2) {
+          performFuzzySearch(query);
+        }
       } else {
-        alert("Masukkan 3 digit terakhir NIM");
+        let input = validateInput(e.target.value);
+        if (input.length > 0 && input.length < 3) {
+          input = formatNIMInput(input);
+          e.target.value = input;
+        }
+        if (input.length === 3) {
+          searchBiodata(input);
+        } else {
+          alert("Masukkan 3 digit terakhir NIM");
+        }
       }
     }
   });
@@ -415,6 +894,24 @@ if (nimInput) {
     if (e.key === "Enter") e.preventDefault();
   });
 }
+
+// Mode toggle event listeners
+if (modeNimBtn) {
+  modeNimBtn.addEventListener("click", () => setSearchMode('nim'));
+}
+
+if (modeFuzzyBtn) {
+  modeFuzzyBtn.addEventListener("click", () => setSearchMode('fuzzy'));
+}
+
+// Filter chips event listeners
+const filterChipButtons = document.querySelectorAll('.filter-chip');
+filterChipButtons.forEach(chip => {
+  chip.addEventListener("click", () => {
+    const field = chip.dataset.field;
+    setFieldFilter(field);
+  });
+});
 
 if (searchAgainBtn) searchAgainBtn.addEventListener("click", resetSearch);
 if (tryAgainBtn) tryAgainBtn.addEventListener("click", resetSearch);
